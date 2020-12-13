@@ -8,6 +8,17 @@ import (
 	"time"
 )
 
+type UserModify struct {
+	UserID uint64 `json:"userID"`
+	Mute   bool   `json:"mute"`
+	Deaf   bool   `json:"deaf"`
+}
+
+type UserModifyRequest struct {
+	Premium PremiumTier  `json:"premium"`
+	Users   []UserModify `json:"users"`
+}
+
 type ModifyTask struct {
 	GuildID    uint64      `json:"guildID"`
 	UserID     uint64      `json:"userID"`

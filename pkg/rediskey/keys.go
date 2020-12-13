@@ -5,6 +5,9 @@ const ActiveGamesZSet = "automuteus:games"
 const AllTokensHSet = "automuteus:alltokens"
 const JobNamespace = "automuteus:jobs:"
 
+const Commit = "automuteus:commit"
+const Version = "automuteus:version"
+
 func ActiveGamesForGuild(guildID string) string {
 	return "automuteus:discord:" + guildID + ":games:set"
 }

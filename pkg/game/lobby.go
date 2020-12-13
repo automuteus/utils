@@ -21,7 +21,7 @@ func (r Region) ToString() string {
 }
 
 type Lobby struct {
-	LobbyCode string `json:"LobbyCode"`
-	Region    Region `json:"Region"`
-	PlayMap   int    `json:"Map"`
+	LobbyCode string  `json:"LobbyCode"`
+	Region    Region  `json:"Region"`
+	PlayMap   PlayMap `json:"Map"`
 }
