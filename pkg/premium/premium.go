@@ -1,9 +1,9 @@
-package task
+package premium
 
-type PremiumTier int16
+type Tier int16
 
 const (
-	FreeTier PremiumTier = iota
+	FreeTier Tier = iota
 	BronzeTier
 	SilverTier
 	GoldTier
@@ -11,7 +11,7 @@ const (
 	SelfHostTier
 )
 
-var PremiumTierStrings = []string{
+var TierStrings = []string{
 	"Free",
 	"Bronze",
 	"Silver",
