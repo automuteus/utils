@@ -5,6 +5,9 @@ const ActiveGamesZSet = "automuteus:games"
 const AllTokensHSet = "automuteus:alltokens"
 const JobNamespace = "automuteus:jobs:"
 
+const TotalUsers = "automuteus:users:total"
+const TotalGames = "automuteus:games:total"
+
 const Commit = "automuteus:commit"
 const Version = "automuteus:version"
 
@@ -60,7 +63,7 @@ func GuildSettings(id string) string {
 	return "automuteus:settings:guild:" + id
 }
 
-//Tokens
+// Tokens
 func GuildTokensKey(guildID string) string {
 	return "automuteus:tokens:guild:" + guildID
 }
