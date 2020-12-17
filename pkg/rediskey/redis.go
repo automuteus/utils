@@ -2,6 +2,7 @@ package rediskey
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -94,4 +95,22 @@ func RefreshTotalGames(ctx context.Context, client *redis.Client, pool *pgxpool.
 		}
 	}
 	return v
+}
+
+func GetCachedUserInfo(ctx context.Context, client *redis.Client, userID, guildID string) string {
+	user, err := client.Get(ctx, CachedUserInfoOnGuild(userID, guildID)).Result()
+	if errors.Is(err, redis.Nil) {
+		return ""
+	}
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+	return user
+}
+
+const CachedUserDataExpiration = time.Hour * 12
+
+func SetCachedUserInfo(ctx context.Context, client *redis.Client, userID, guildID, userData string) error {
+	return client.Set(ctx, CachedUserInfoOnGuild(userID, guildID), userData, CachedUserDataExpiration).Err()
 }

@@ -40,9 +40,9 @@ func PushJob(ctx context.Context, redis *redis.Client, connCode string, jobType 
 		notify(ctx, redis, connCode)
 	}
 
-	//new list
+	// new list
 	if count < 2 {
-		//log.Printf("Set TTL for List")
+		// log.Printf("Set TTL for List")
 		redis.Expire(ctx, rediskey.JobNamespace+connCode, JobTTLSeconds*time.Second)
 	}
 
