@@ -2,12 +2,8 @@ package rediskey
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"github.com/go-redis/redis/v8"
-	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
-	"time"
 )
 
 func GetVersionAndCommit(ctx context.Context, client *redis.Client) (string, string) {
@@ -41,76 +37,4 @@ func GetGuildCounter(ctx context.Context, client *redis.Client) int64 {
 		return 0
 	}
 	return count
-}
-
-func GetActiveGames(ctx context.Context, client *redis.Client, secs int64) int64 {
-	now := time.Now()
-	before := now.Add(-(time.Second * time.Duration(secs)))
-	count, err := client.ZCount(ctx, ActiveGamesZSet, fmt.Sprintf("%d", before.Unix()), fmt.Sprintf("%d", now.Unix())).Result()
-	if err != nil {
-		log.Println(err)
-		return 0
-	}
-	return count
-}
-
-const TotalGameExpiration = time.Minute * 5
-const TotalUsersExpiration = time.Minute * 5
-
-const NotFound = -1
-
-func GetTotalGames(ctx context.Context, client *redis.Client) int64 {
-	v, err := client.Get(ctx, TotalGames).Int64()
-	if err == nil {
-		return v
-	}
-	return NotFound
-}
-
-func GetTotalUsers(ctx context.Context, client *redis.Client) int64 {
-	v, err := client.Get(ctx, TotalUsers).Int64()
-	if err == nil {
-		return v
-	}
-	return NotFound
-}
-
-func RefreshTotalUsers(ctx context.Context, client *redis.Client, pool *pgxpool.Pool) int64 {
-	v := queryTotalUsers(ctx, pool)
-	if v != NotFound {
-		err := client.Set(ctx, TotalUsers, v, TotalUsersExpiration).Err()
-		if err != nil {
-			log.Println(err)
-		}
-	}
-	return v
-}
-
-func RefreshTotalGames(ctx context.Context, client *redis.Client, pool *pgxpool.Pool) int64 {
-	v := queryTotalGames(ctx, pool)
-	if v != NotFound {
-		err := client.Set(ctx, TotalGames, v, TotalGameExpiration).Err()
-		if err != nil {
-			log.Println(err)
-		}
-	}
-	return v
-}
-
-func GetCachedUserInfo(ctx context.Context, client *redis.Client, userID, guildID string) string {
-	user, err := client.Get(ctx, CachedUserInfoOnGuild(userID, guildID)).Result()
-	if errors.Is(err, redis.Nil) {
-		return ""
-	}
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-	return user
-}
-
-const CachedUserDataExpiration = time.Hour * 12
-
-func SetCachedUserInfo(ctx context.Context, client *redis.Client, userID, guildID, userData string) error {
-	return client.Set(ctx, CachedUserInfoOnGuild(userID, guildID), userData, CachedUserDataExpiration).Err()
 }

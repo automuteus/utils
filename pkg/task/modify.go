@@ -55,7 +55,7 @@ func ApplyMuteDeaf(sess *discordgo.Session, guildID, userID string, mute, deaf b
 	return err
 }
 
-//a response indicating how the mutes/deafens were issued, and if ratelimits occurred
+// a response indicating how the mutes/deafens were issued, and if ratelimits occurred
 type MuteDeafenSuccessCounts struct {
 	Worker    int64 `json:"worker"`
 	Capture   int64 `json:"capture"`

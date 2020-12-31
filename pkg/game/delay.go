@@ -2,7 +2,7 @@ package game
 
 // GameDelays struct
 type GameDelays struct {
-	//maps from origin->new phases, with the integer number of seconds for the delay
+	// maps from origin->new phases, with the integer number of seconds for the delay
 	Delays map[PhaseNameString]map[PhaseNameString]int `json:"delays"`
 }
 

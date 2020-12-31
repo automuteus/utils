@@ -79,3 +79,11 @@ func RoomCodesForConnCode(connCode string) string {
 func CachedUserInfoOnGuild(userID, guildID string) string {
 	return "automuteus:cache:userinfo:" + guildID + ":" + userID
 }
+
+func UserSoftban(userID string) string {
+	return "automuteus:ratelimit:softban:user:" + userID
+}
+
+func GuildPrefix(guildID string) string {
+	return "automuteus:prefix:guild:" + guildID
+}
