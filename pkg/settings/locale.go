@@ -14,14 +14,16 @@ import (
 const DefaultLang = "en"
 const DefaultLocalePath = "locales/"
 
-func InitLang(localePath, lang string) *i18n.Bundle {
+var GlobalBundle *i18n.Bundle
+
+func InitLang(localePath, lang string) {
 	if lang == "" {
 		lang = DefaultLang
 	}
 	if localePath == "" {
 		localePath = DefaultLocalePath
 	}
-	return LoadTranslations(localePath, lang)
+	GlobalBundle = LoadTranslations(localePath, lang)
 }
 
 func LoadTranslations(localePath, lang string) *i18n.Bundle {
@@ -65,7 +67,7 @@ func LoadTranslations(localePath, lang string) *i18n.Bundle {
 	return bundle
 }
 
-func LocalizeMessage(bundle *i18n.Bundle, args ...interface{}) string {
+func LocalizeMessage(args ...interface{}) string {
 	if len(args) == 0 {
 		return "Noup"
 	}
@@ -104,7 +106,7 @@ func LocalizeMessage(bundle *i18n.Bundle, args ...interface{}) string {
 		}
 	}
 
-	localizer := i18n.NewLocalizer(bundle, lang)
+	localizer := i18n.NewLocalizer(GlobalBundle, lang)
 	msg, err := localizer.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: message,
 		TemplateData:   templateData,
