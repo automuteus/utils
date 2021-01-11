@@ -3,7 +3,6 @@ package settings
 import (
 	"github.com/automuteus/utils/pkg/game"
 	"github.com/bwmarrin/discordgo"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"os"
 	"sync"
 )
@@ -55,9 +54,9 @@ func MakeGuildSettings() *GuildSettings {
 	}
 }
 
-func (gs *GuildSettings) LocalizeMessage(bundle *i18n.Bundle, args ...interface{}) string {
+func (gs *GuildSettings) LocalizeMessage(args ...interface{}) string {
 	args = append(args, gs.GetLanguage())
-	return LocalizeMessage(bundle, args...)
+	return LocalizeMessage(args...)
 }
 
 func (gs *GuildSettings) HasAdminPerms(user *discordgo.User) bool {
