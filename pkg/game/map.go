@@ -14,3 +14,10 @@ var MapNames = map[PlayMap]string{
 	MIRA:  "Mira",
 	POLUS: "Polus",
 }
+
+var NameToPlayMap = map[string]int32{
+	"the_skeld": (int32)(SKELD),
+	"mira_hq":   (int32)(MIRA),
+	"polus":     (int32)(POLUS),
+	"NoMap":     -1,
+}
