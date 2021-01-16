@@ -27,6 +27,8 @@ type ModifyTask struct {
 	TaskID     string      `json:"taskID"`
 }
 
+const IDLength = 10
+
 func NewModifyTask(guildID, userID uint64, params PatchParams) ModifyTask {
 	h := sha256.New()
 	h.Write([]byte(fmt.Sprintf("%d", guildID)))
@@ -36,7 +38,7 @@ func NewModifyTask(guildID, userID uint64, params PatchParams) ModifyTask {
 		GuildID:    guildID,
 		UserID:     userID,
 		Parameters: params,
-		TaskID:     hex.EncodeToString(h.Sum(nil))[0:10],
+		TaskID:     hex.EncodeToString(h.Sum(nil))[0:IDLength],
 	}
 }
 
