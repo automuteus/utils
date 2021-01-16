@@ -3,7 +3,6 @@ package settings
 import (
 	"github.com/automuteus/utils/pkg/game"
 	"github.com/bwmarrin/discordgo"
-	"os"
 	"sync"
 )
 
@@ -29,8 +28,7 @@ type GuildSettings struct {
 	MuteSpectator            bool   `json:"muteSpectator"`
 }
 
-func MakeGuildSettings() *GuildSettings {
-	prefix := os.Getenv("AUTOMUTEUS_GLOBAL_PREFIX")
+func MakeGuildSettings(prefix string) *GuildSettings {
 	if prefix == "" {
 		prefix = ".au"
 	}

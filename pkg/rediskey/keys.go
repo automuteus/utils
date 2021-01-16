@@ -55,6 +55,10 @@ func TasksSubscribe(connectCode string) string {
 	return "automuteus:tasks:subscribe:" + connectCode
 }
 
+func TasksList(connectCode string) string {
+	return "automuteus:tasks:list:" + connectCode
+}
+
 func BotTokenIdentifyLock(token string) string {
 	return "automuteus:token:lock" + token
 }
