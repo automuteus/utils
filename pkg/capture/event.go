@@ -20,8 +20,8 @@ const (
 )
 
 type Event struct {
-	EventType EventType   `json:"type"`
-	Payload   interface{} `json:"payload"`
+	EventType EventType `json:"type"`
+	Payload   []byte    `json:"payload"`
 }
 
 const EventTTLSeconds = 3600
@@ -29,7 +29,7 @@ const EventTTLSeconds = 3600
 func PushEvent(ctx context.Context, redis *redis.Client, connCode string, jobType EventType, payload string) error {
 	event := Event{
 		EventType: jobType,
-		Payload:   payload,
+		Payload:   []byte(payload),
 	}
 	jBytes, err := json.Marshal(event)
 	if err != nil {
