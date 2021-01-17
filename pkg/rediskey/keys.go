@@ -3,7 +3,7 @@ package rediskey
 const TotalGuildsSet = "automuteus:count:guilds"
 const ActiveGamesZSet = "automuteus:games"
 const AllTokensHSet = "automuteus:alltokens"
-const JobNamespace = "automuteus:jobs:"
+const EventsNamespace = "automuteus:capture:events"
 
 const TotalUsers = "automuteus:users:total"
 const TotalGames = "automuteus:games:total"
@@ -49,10 +49,6 @@ func RequestsByType(typeStr string) string {
 
 func CompleteTask(taskID string) string {
 	return "automuteus:tasks:complete:ack:" + taskID
-}
-
-func TasksSubscribe(connectCode string) string {
-	return "automuteus:tasks:subscribe:" + connectCode
 }
 
 func TasksList(connectCode string) string {

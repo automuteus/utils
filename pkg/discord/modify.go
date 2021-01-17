@@ -1,4 +1,4 @@
-package task
+package discord
 
 import (
 	"crypto/sha256"
