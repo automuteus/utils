@@ -3,6 +3,7 @@ package capture
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/automuteus/utils/pkg/rediskey"
 	"github.com/go-redis/redis/v8"
 	"time"
@@ -36,9 +37,6 @@ func PushEvent(ctx context.Context, redis *redis.Client, connCode string, jobTyp
 	}
 
 	count, err := redis.RPush(ctx, rediskey.EventsNamespace+connCode, string(jBytes)).Result()
-	if err == nil {
-		notify(ctx, redis, connCode)
-	}
 
 	// new list
 	if count < 2 {
@@ -49,29 +47,15 @@ func PushEvent(ctx context.Context, redis *redis.Client, connCode string, jobTyp
 	return err
 }
 
-func notify(ctx context.Context, redis *redis.Client, connCode string) {
-	redis.Publish(ctx, rediskey.EventsNamespace+connCode+":notify", true)
-}
-
-func Subscribe(ctx context.Context, redis *redis.Client, connCode string) *redis.PubSub {
-	return redis.Subscribe(ctx, rediskey.EventsNamespace+connCode+":notify")
-}
-
-func PopEvent(ctx context.Context, redis *redis.Client, connCode string) (Event, error) {
-	str, err := redis.LPop(ctx, rediskey.EventsNamespace+connCode).Result()
-
-	j := Event{}
+func PopRawEvent(ctx context.Context, redis *redis.Client, connCode string, timeout time.Duration) (string, error) {
+	elems, err := redis.BLPop(ctx, timeout, rediskey.EventsNamespace+connCode).Result()
 	if err != nil {
-		return j, err
+		return "", err
 	}
-	err = json.Unmarshal([]byte(str), &j)
-	return j, err
-}
 
-func Ack(ctx context.Context, redis *redis.Client, connCode string) {
-	redis.Publish(ctx, rediskey.EventsNamespace+connCode+":ack", true)
-}
-
-func AckSubscribe(ctx context.Context, redis *redis.Client, connCode string) *redis.PubSub {
-	return redis.Subscribe(ctx, rediskey.EventsNamespace+connCode+":ack")
+	if len(elems) < 2 {
+		return "", errors.New("insufficient elements returned")
+	} else {
+		return elems[1], nil
+	}
 }
