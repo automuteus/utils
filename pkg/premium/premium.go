@@ -19,3 +19,8 @@ var TierStrings = []string{
 	"Platinum",
 	"SelfHost",
 }
+
+type PremiumRecord struct {
+	Tier Tier `json:"tier"`
+	Days int  `json:"days"`
+}

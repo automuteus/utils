@@ -63,6 +63,10 @@ func GuildSettings(id string) string {
 	return "automuteus:settings:guild:" + id
 }
 
+func GuildPremiumRecord(guildID string) string {
+	return "automuteus:premium:guild:" + guildID
+}
+
 // Tokens
 func GuildTokensKey(guildID string) string {
 	return "automuteus:tokens:guild:" + guildID
