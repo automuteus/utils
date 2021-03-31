@@ -4,6 +4,7 @@ const TotalGuildsSet = "automuteus:count:guilds"
 const ActiveGamesZSet = "automuteus:games"
 const AllTokensHSet = "automuteus:alltokens"
 const EventsNamespace = "automuteus:capture:events"
+const JobNamespace = "automuteus:jobs:"
 
 const TotalUsers = "automuteus:users:total"
 const TotalGames = "automuteus:games:total"
