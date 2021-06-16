@@ -14,6 +14,12 @@ const (
 	Brown  = 9
 	Cyan   = 10
 	Lime   = 11
+	Maroon = 12
+	Rose   = 13
+	Banana = 14
+	Gray   = 15
+	Tan    = 16
+	Sunset = 17
 )
 
 // ColorStrings for lowercase, possibly for translation if needed
@@ -30,6 +36,12 @@ var ColorStrings = map[string]int{
 	"brown":  Brown,
 	"cyan":   Cyan,
 	"lime":   Lime,
+	"maroon": Maroon,
+	"rose":   Rose,
+	"banana": Banana,
+	"gray":   Gray,
+	"tan":    Tan,
+	"sunset": Sunset,
 }
 
 // GetColorStringForInt does what it sounds like
