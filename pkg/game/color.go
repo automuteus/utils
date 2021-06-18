@@ -19,7 +19,7 @@ const (
 	Banana = 14
 	Gray   = 15
 	Tan    = 16
-	Sunset = 17
+	Coral  = 17
 )
 
 // ColorStrings for lowercase, possibly for translation if needed
@@ -41,7 +41,7 @@ var ColorStrings = map[string]int{
 	"banana": Banana,
 	"gray":   Gray,
 	"tan":    Tan,
-	"sunset": Sunset,
+	"coral":  Coral,
 }
 
 // GetColorStringForInt does what it sounds like
