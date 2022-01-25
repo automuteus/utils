@@ -9,6 +9,8 @@ import (
 const DefaultLeaderboardSize = 3
 const DefaultLeaderboardMin = 3
 
+const OfficialBotMention = "@AutoMuteUs"
+
 type GuildSettings struct {
 	AdminUserIDs             []string        `json:"adminIDs"`
 	PermissionRoleIDs        []string        `json:"permissionRoleIDs"`
@@ -29,9 +31,13 @@ type GuildSettings struct {
 	DisplayRoomCode          string `json:"displayRoomCode"`
 }
 
-func MakeGuildSettings(prefix string) *GuildSettings {
+func MakeGuildSettings(prefix string, official bool) *GuildSettings {
 	if prefix == "" {
-		prefix = ".au"
+		if official {
+			prefix = OfficialBotMention
+		} else {
+			prefix = ".au"
+		}
 	}
 	return &GuildSettings{
 		CommandPrefix:            prefix,
