@@ -2,6 +2,7 @@ package settings
 
 import (
 	"github.com/automuteus/utils/pkg/game"
+	"github.com/automuteus/utils/pkg/locale"
 	"github.com/bwmarrin/discordgo"
 	"sync"
 )
@@ -41,7 +42,7 @@ func MakeGuildSettings(prefix string, official bool) *GuildSettings {
 	}
 	return &GuildSettings{
 		CommandPrefix:            prefix,
-		Language:                 DefaultLang,
+		Language:                 locale.DefaultLang,
 		AdminUserIDs:             []string{},
 		PermissionRoleIDs:        []string{},
 		Delays:                   game.MakeDefaultDelays(),
@@ -62,7 +63,7 @@ func MakeGuildSettings(prefix string, official bool) *GuildSettings {
 
 func (gs *GuildSettings) LocalizeMessage(args ...interface{}) string {
 	args = append(args, gs.GetLanguage())
-	return LocalizeMessage(args...)
+	return locale.LocalizeMessage(args...)
 }
 
 func (gs *GuildSettings) HasAdminPerms(user *discordgo.User) bool {

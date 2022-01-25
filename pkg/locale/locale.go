@@ -1,36 +1,54 @@
-package settings
+package locale
 
 import (
-	"github.com/BurntSushi/toml"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"golang.org/x/text/language"
 	"io/ioutil"
 	"log"
 	"path"
 	"regexp"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"golang.org/x/text/language"
 )
 
-const DefaultLang = "en"
-const DefaultLocalePath = "locales/"
+const (
+	DefaultLang       = "en"
+	DefaultLocalePath = "locales/"
+)
 
-var GlobalBundle *i18n.Bundle
+var bundleInstance *i18n.Bundle
 
-func InitLang(localePath, lang string) {
-	if lang == "" {
-		lang = DefaultLang
-	}
+var localeLanguages = make(map[string]string)
+
+func InitLang(localePath, defaultLang string) {
 	if localePath == "" {
 		localePath = DefaultLocalePath
 	}
-	GlobalBundle = LoadTranslations(localePath, lang)
+	if defaultLang == "" {
+		defaultLang = DefaultLang
+	}
+	bundleInstance = LoadTranslations(localePath, defaultLang)
 }
 
-func LoadTranslations(localePath, lang string) *i18n.Bundle {
+func GetBundle() *i18n.Bundle {
+	if bundleInstance == nil {
+		InitLang("", "")
+	}
+	return bundleInstance
+}
+
+func GetLanguages() map[string]string {
+	return localeLanguages
+}
+
+func LoadTranslations(localePath, defaultLang string) *i18n.Bundle {
 	bundle := i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 
-	defaultBotLangLoaded := lang == DefaultLang
+	localeLanguages = make(map[string]string)
+	localeLanguages[defaultLang] = language.Make(defaultLang).String()
+
 	files, err := ioutil.ReadDir(localePath)
 	if err == nil {
 		re := regexp.MustCompile(`^active\.(?P<lang>.*)\.toml$`)
@@ -39,9 +57,7 @@ func LoadTranslations(localePath, lang string) *i18n.Bundle {
 				fileLang := match[re.SubexpIndex("lang")]
 
 				if _, err := bundle.LoadMessageFile(path.Join(localePath, file.Name())); err != nil {
-					if lang != DefaultLang && fileLang != DefaultLang {
-						log.Println("[Locale] Error load message file:", err)
-					}
+					log.Println(err)
 				} else {
 					langName, _ := i18n.NewLocalizer(bundle, fileLang).Localize(&i18n.LocalizeConfig{
 						DefaultMessage: &i18n.Message{
@@ -49,30 +65,26 @@ func LoadTranslations(localePath, lang string) *i18n.Bundle {
 							Other: "English", /* language.Make(fileLang).String() */
 						},
 					})
+					localeLanguages[fileLang /* msgFile.Tag.String() */] = langName
 
 					log.Printf("[Locale] Loaded language: %s - %s", fileLang, langName)
-					if lang == fileLang {
-						defaultBotLangLoaded = true
-						log.Printf("[Locale] Selected language is %s \n", lang)
-					}
 				}
 			}
 		}
 	}
-	if !defaultBotLangLoaded {
-		log.Printf("[Locale] Localization file with language %s not found. The default lang is set to: %s\n", lang, DefaultLang)
-		lang = DefaultLang
-	}
 
+	bundleInstance = bundle
 	return bundle
 }
 
+// func LocalizeMessage(message *i18n.Message, templateData map[string]interface{}) string {
 func LocalizeMessage(args ...interface{}) string {
 	if len(args) == 0 {
 		return "Noup"
 	}
 
 	var templateData map[string]interface{}
+	// note, this is the COMPILED default, not the default used in InitLang
 	lang := DefaultLang
 	message := args[0].(*i18n.Message)
 	var pluralCount interface{} = nil
@@ -106,7 +118,8 @@ func LocalizeMessage(args ...interface{}) string {
 		}
 	}
 
-	localizer := i18n.NewLocalizer(GlobalBundle, lang)
+	bundle := GetBundle()
+	localizer := i18n.NewLocalizer(bundle, lang)
 	msg, err := localizer.Localize(&i18n.LocalizeConfig{
 		DefaultMessage: message,
 		TemplateData:   templateData,
