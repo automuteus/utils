@@ -4,7 +4,9 @@ import (
 	"github.com/automuteus/utils/pkg/game"
 	"github.com/automuteus/utils/pkg/locale"
 	"github.com/bwmarrin/discordgo"
+	"os"
 	"sync"
+	"time"
 )
 
 const DefaultLeaderboardSize = 3
@@ -91,6 +93,10 @@ func (gs *GuildSettings) HasRolePerms(mem *discordgo.Member) bool {
 }
 
 func (gs *GuildSettings) GetCommandPrefix() string {
+	// if we're past April 31st 2022 and on the official bot, @AutoMuteUs is the only supported prefix for the bot
+	if os.Getenv("AUTOMUTEUS_OFFICIAL") != "" && time.Now().Unix() > 1651377600 {
+		return OfficialBotMention
+	}
 	return gs.CommandPrefix
 }
 
