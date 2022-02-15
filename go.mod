@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/BurntSushi/toml v1.0.0
+	github.com/automuteus/galactus v1.2.2
 	github.com/bwmarrin/discordgo v0.22.0
 	github.com/georgysavva/scany v0.2.7
 	github.com/go-redis/redis/v8 v8.4.2

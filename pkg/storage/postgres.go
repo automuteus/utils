@@ -64,7 +64,7 @@ func (psqlInterface *PsqlInterface) insertGuild(guildID uint64, guildName string
 }
 
 func (psqlInterface *PsqlInterface) GetGuild(guildID uint64) (*PostgresGuild, error) {
-	guilds := []*PostgresGuild{}
+	var guilds []*PostgresGuild
 	err := pgxscan.Select(context.Background(), psqlInterface.Pool, &guilds, "SELECT * FROM guilds WHERE guild_id=$1", guildID)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (psqlInterface *PsqlInterface) GetUserByString(userID string) (*PostgresUse
 }
 
 func (psqlInterface *PsqlInterface) GetUser(userID uint64) (*PostgresUser, error) {
-	users := []*PostgresUser{}
+	var users []*PostgresUser
 	err := pgxscan.Select(context.Background(), psqlInterface.Pool, &users, "SELECT * FROM users WHERE user_id = $1", userID)
 	if err != nil {
 		return nil, err
@@ -133,9 +133,9 @@ func (psqlInterface *PsqlInterface) GetUser(userID uint64) (*PostgresUser, error
 	return nil, nil
 }
 
-func (psqlInterface *PsqlInterface) GetGame(connectCode, matchID string) (*PostgresGame, error) {
-	games := []*PostgresGame{}
-	err := pgxscan.Select(context.Background(), psqlInterface.Pool, &games, "SELECT * FROM games WHERE game_id = $1 AND connect_code = $2;", matchID, connectCode)
+func (psqlInterface *PsqlInterface) GetGame(guildID, connectCode, matchID string) (*PostgresGame, error) {
+	var games []*PostgresGame
+	err := pgxscan.Select(context.Background(), psqlInterface.Pool, &games, "SELECT * FROM games WHERE guild_id = $1 AND game_id = $2 AND connect_code = $3;", guildID, matchID, connectCode)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (psqlInterface *PsqlInterface) GetGame(connectCode, matchID string) (*Postg
 }
 
 func (psqlInterface *PsqlInterface) GetGameEvents(matchID string) ([]*PostgresGameEvent, error) {
-	events := []*PostgresGameEvent{}
+	var events []*PostgresGameEvent
 	err := pgxscan.Select(context.Background(), psqlInterface.Pool, &events, "SELECT * FROM game_events WHERE game_id = $1 ORDER BY event_id ASC;", matchID)
 	if err != nil {
 		return nil, err
