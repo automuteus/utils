@@ -63,7 +63,7 @@ func (psqlInterface *PsqlInterface) insertGuild(guildID uint64, guildName string
 	return err
 }
 
-func (psqlInterface *PsqlInterface) GetGuild(guildID uint64) (*PostgresGuild, error) {
+func (psqlInterface *PsqlInterface) getGuild(guildID uint64) (*PostgresGuild, error) {
 	var guilds []*PostgresGuild
 	err := pgxscan.Select(context.Background(), psqlInterface.Pool, &guilds, "SELECT * FROM guilds WHERE guild_id=$1", guildID)
 	if err != nil {
@@ -197,9 +197,22 @@ func (psqlInterface *PsqlInterface) GetGuildPremiumStatus(guildID string) (premi
 		return premium.FreeTier, 0
 	}
 
-	guild, err := psqlInterface.GetGuild(gid)
+	guild, err := psqlInterface.getGuild(gid)
 	if err != nil {
 		return premium.FreeTier, 0
+	}
+
+	// transferred servers are always treated as free tier, even if their tier/expiry is marked otherwise (the server
+	// that premium was transferred to still uses these values, as "inherited")
+	if guild.Transferred != nil {
+		if *guild.Transferred {
+			return premium.FreeTier, 0
+		}
+	}
+
+	// follow the link to the inherited server
+	if guild.InheritsFrom != nil {
+		return psqlInterface.GetGuildPremiumStatus(fmt.Sprintf("%d", *guild.InheritsFrom))
 	}
 
 	daysRem := premium.NoExpiryCode
@@ -214,14 +227,14 @@ func (psqlInterface *PsqlInterface) GetGuildPremiumStatus(guildID string) (premi
 }
 
 func (psqlInterface *PsqlInterface) EnsureGuildExists(guildID uint64, guildName string) (*PostgresGuild, error) {
-	guild, err := psqlInterface.GetGuild(guildID)
+	guild, err := psqlInterface.getGuild(guildID)
 
 	if guild == nil {
 		err := psqlInterface.insertGuild(guildID, guildName)
 		if err != nil {
 			return nil, err
 		}
-		return psqlInterface.GetGuild(guildID)
+		return psqlInterface.getGuild(guildID)
 	}
 	return guild, err
 }
