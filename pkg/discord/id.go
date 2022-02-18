@@ -2,8 +2,17 @@ package discord
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
+
+func MentionByUserID(userID string) string {
+	return fmt.Sprintf("<@!%s>", userID)
+}
+
+func MentionByChannelID(channelID string) string {
+	return fmt.Sprintf("<#%s>", channelID)
+}
 
 func ExtractRoleIDFromText(mention string) (string, error) {
 	// role is formatted <@&123456>

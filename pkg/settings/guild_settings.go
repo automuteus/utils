@@ -34,13 +34,10 @@ type GuildSettings struct {
 	DisplayRoomCode          string `json:"displayRoomCode"`
 }
 
-func MakeGuildSettings(prefix string, official bool) *GuildSettings {
+func MakeGuildSettings(prefix string) *GuildSettings {
+	// on the official bot, we defer to the "GetCommandPrefix" function to handle @AutoMuteUs
 	if prefix == "" {
-		if official {
-			prefix = OfficialBotMention
-		} else {
-			prefix = ".au"
-		}
+		prefix = ".au"
 	}
 	return &GuildSettings{
 		CommandPrefix:            prefix,
