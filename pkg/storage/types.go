@@ -1,12 +1,12 @@
 package storage
 
 type PostgresGuild struct {
-	GuildID      uint64  `db:"guild_id"`
-	GuildName    string  `db:"guild_name"`
-	Premium      int16   `db:"premium"`
-	TxTimeUnix   *int32  `db:"tx_time_unix"`
-	Transferred  *bool   `db:"transferred"`
-	InheritsFrom *uint64 `db:"inherits_from"`
+	GuildID       uint64  `db:"guild_id"`
+	GuildName     string  `db:"guild_name"`
+	Premium       int16   `db:"premium"`
+	TxTimeUnix    *int32  `db:"tx_time_unix"`
+	TransferredTo *uint64 `db:"transferred_to"`
+	InheritsFrom  *uint64 `db:"inherits_from"`
 }
 
 type PostgresGame struct {

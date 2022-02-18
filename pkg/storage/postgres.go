@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/automuteus/utils/pkg/premium"
 	"github.com/georgysavva/scany/pgxscan"
@@ -73,7 +74,7 @@ func (psqlInterface *PsqlInterface) getGuild(guildID uint64) (*PostgresGuild, er
 	if len(guilds) > 0 {
 		return guilds[0], nil
 	}
-	return nil, nil
+	return nil, errors.New("no guild found by that ID")
 }
 
 func (psqlInterface *PsqlInterface) insertUser(userID uint64) error {
@@ -204,13 +205,12 @@ func (psqlInterface *PsqlInterface) GetGuildPremiumStatus(guildID string) (premi
 
 	// transferred servers are always treated as free tier, even if their tier/expiry is marked otherwise (the server
 	// that premium was transferred to still uses these values, as "inherited")
-	if guild.Transferred != nil {
-		if *guild.Transferred {
-			return premium.FreeTier, 0
-		}
+	if guild.TransferredTo != nil {
+		return premium.FreeTier, 0
 	}
 
 	// follow the link to the inherited server
+	// other tooling that facilitates transfers/gold sub-servers will need to be careful to avoid cyclic inheritance...
 	if guild.InheritsFrom != nil {
 		return psqlInterface.GetGuildPremiumStatus(fmt.Sprintf("%d", *guild.InheritsFrom))
 	}
