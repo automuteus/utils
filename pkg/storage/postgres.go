@@ -187,6 +187,14 @@ func (psqlInterface *PsqlInterface) insertPlayer(player *PostgresUserGame) error
 const SecsInADay = 86400
 
 func (psqlInterface *PsqlInterface) GetGuildPremiumStatus(guildID string) (premium.Tier, int) {
+	return psqlInterface.getGuildPremiumStatus(guildID, 0)
+}
+
+func (psqlInterface *PsqlInterface) getGuildPremiumStatus(guildID string, depth int) (premium.Tier, int) {
+	// if we somehow recurse too deep...
+	if depth > 3 {
+		return premium.FreeTier, 0
+	}
 	// self-hosting; only return the true guild status if this variable is set
 	if os.Getenv("AUTOMUTEUS_OFFICIAL") == "" {
 		return premium.SelfHostTier, premium.NoExpiryCode
@@ -203,16 +211,19 @@ func (psqlInterface *PsqlInterface) GetGuildPremiumStatus(guildID string) (premi
 		return premium.FreeTier, 0
 	}
 
-	// transferred servers are always treated as free tier, even if their tier/expiry is marked otherwise (the server
-	// that premium was transferred to still uses these values, as "inherited")
-	if guild.TransferredTo != nil {
-		return premium.FreeTier, 0
+	// if this is a recursive call, then we ignore the transfer (this is how inheriting works)
+	if depth == 0 {
+		// transferred servers are always treated as free tier, even if their tier/expiry is marked otherwise (the server
+		// that premium was transferred to still uses these values, as "inherited")
+		if guild.TransferredTo != nil {
+			return premium.FreeTier, 0
+		}
 	}
 
 	// follow the link to the inherited server
 	// other tooling that facilitates transfers/gold sub-servers will need to be careful to avoid cyclic inheritance...
 	if guild.InheritsFrom != nil {
-		return psqlInterface.GetGuildPremiumStatus(fmt.Sprintf("%d", *guild.InheritsFrom))
+		return psqlInterface.getGuildPremiumStatus(fmt.Sprintf("%d", *guild.InheritsFrom), depth+1)
 	}
 
 	daysRem := premium.NoExpiryCode
