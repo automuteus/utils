@@ -220,18 +220,22 @@ func (psqlInterface *PsqlInterface) getGuildPremiumStatus(guildID string, depth 
 		}
 	}
 
-	// follow the link to the inherited server
-	// other tooling that facilitates transfers/gold sub-servers will need to be careful to avoid cyclic inheritance...
-	if guild.InheritsFrom != nil {
-		return psqlInterface.getGuildPremiumStatus(fmt.Sprintf("%d", *guild.InheritsFrom), depth+1)
-	}
-
 	daysRem := premium.NoExpiryCode
 
 	if guild.TxTimeUnix != nil {
 		diff := time.Now().Unix() - int64(*guild.TxTimeUnix)
 		// 31 - days elapsed
 		daysRem = int(premium.SubDays - (diff / SecsInADay))
+		// if the premium for this server is still active, return it (disregarding inheritance)
+		if daysRem > 0 {
+			return premium.Tier(guild.Premium), daysRem
+		}
+	}
+
+	// follow the link to the inherited server
+	// other tooling that facilitates transfers/gold sub-servers will need to be careful to avoid cyclic inheritance...
+	if guild.InheritsFrom != nil {
+		return psqlInterface.getGuildPremiumStatus(fmt.Sprintf("%d", *guild.InheritsFrom), depth+1)
 	}
 
 	return premium.Tier(guild.Premium), daysRem
