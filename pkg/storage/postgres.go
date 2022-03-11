@@ -82,35 +82,35 @@ func (psqlInterface *PsqlInterface) insertUser(userID uint64) error {
 	return err
 }
 
-func (psqlInterface *PsqlInterface) OptUserByString(userID string, opt bool) (bool, error) {
+func (psqlInterface *PsqlInterface) OptUserByString(userID string, opt bool) error {
 	uid, err := strconv.ParseUint(userID, 10, 64)
 	if err != nil {
-		return false, err
+		return err
 	}
 	user, err := psqlInterface.EnsureUserExists(uid)
 	if err != nil {
-		return false, err
+		return err
 	}
 	if user.Opt == opt {
-		return false, nil
+		return errors.New("user opt status is already set to the value specified")
 	}
 	_, err = psqlInterface.Pool.Exec(context.Background(), "UPDATE users SET opt = $1 WHERE user_id = $2;", opt, uid)
 	if err != nil {
-		return false, err
+		return err
 	}
 	if !opt {
 		_, err = psqlInterface.Pool.Exec(context.Background(), "UPDATE game_events SET user_id = NULL WHERE user_id = $1;", uid)
 		if err != nil {
-			log.Println(err)
+			return err
 		}
 
 		_, err = psqlInterface.Pool.Exec(context.Background(), "DELETE FROM users_games WHERE user_id = $1;", uid)
 		if err != nil {
-			log.Println(err)
+			return err
 		}
 	}
 
-	return true, nil
+	return nil
 }
 
 func (psqlInterface *PsqlInterface) GetUserByString(userID string) (*PostgresUser, error) {
