@@ -60,8 +60,8 @@ func BotTokenIdentifyLock(token string) string {
 	return "automuteus:token:lock" + token
 }
 
-func GuildSettings(id string) string {
-	return "automuteus:settings:guild:" + id
+func GuildSettings(id HashedID) string {
+	return "automuteus:settings:guild:" + string(id)
 }
 
 func GuildPremiumRecord(guildID string) string {

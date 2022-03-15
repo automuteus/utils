@@ -14,6 +14,24 @@ func MentionByChannelID(channelID string) string {
 	return fmt.Sprintf("<#%s>", channelID)
 }
 
+func ExtractChannelIDFromText(mention string) (string, error) {
+	// channel is formatted <#123456>
+	if strings.HasPrefix(mention, "<#") && strings.HasSuffix(mention, ">") {
+		err := ValidateSnowflake(mention[2 : len(mention)-1])
+		if err == nil {
+			return mention[2 : len(mention)-1], nil
+		}
+		return "", err
+	} else {
+		// if they just used the ID of the channel directly
+		err := ValidateSnowflake(mention)
+		if err == nil {
+			return mention, nil
+		}
+	}
+	return "", errors.New("channel text does not conform to the correct format (`<#roleid>` or `channelid`)")
+}
+
 func ExtractRoleIDFromText(mention string) (string, error) {
 	// role is formatted <@&123456>
 	if strings.HasPrefix(mention, "<@&") && strings.HasSuffix(mention, ">") {
@@ -32,7 +50,7 @@ func ExtractRoleIDFromText(mention string) (string, error) {
 	return "", errors.New("role text does not conform to the correct format (`<@&roleid>` or `roleid`)")
 }
 
-func ExtractUserIDFromMention(mention string) (string, error) {
+func ExtractUserIDFromText(mention string) (string, error) {
 	// nickname format
 	switch {
 	case strings.HasPrefix(mention, "<@!") && strings.HasSuffix(mention, ">"):

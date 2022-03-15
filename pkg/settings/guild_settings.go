@@ -4,20 +4,15 @@ import (
 	"github.com/automuteus/utils/pkg/game"
 	"github.com/automuteus/utils/pkg/locale"
 	"github.com/bwmarrin/discordgo"
-	"os"
 	"sync"
-	"time"
 )
 
 const DefaultLeaderboardSize = 3
 const DefaultLeaderboardMin = 3
 
-const OfficialBotMention = "@AutoMuteUs"
-
 type GuildSettings struct {
 	AdminUserIDs             []string        `json:"adminIDs"`
 	PermissionRoleIDs        []string        `json:"permissionRoleIDs"`
-	CommandPrefix            string          `json:"commandPrefix"`
 	Language                 string          `json:"language"`
 	VoiceRules               game.VoiceRules `json:"voiceRules"`
 	MapVersion               string          `json:"mapVersion"`
@@ -34,13 +29,8 @@ type GuildSettings struct {
 	DisplayRoomCode          string `json:"displayRoomCode"`
 }
 
-func MakeGuildSettings(prefix string) *GuildSettings {
-	// on the official bot, we defer to the "GetCommandPrefix" function to handle @AutoMuteUs
-	if prefix == "" {
-		prefix = ".au"
-	}
+func MakeGuildSettings() *GuildSettings {
 	return &GuildSettings{
-		CommandPrefix:            prefix,
 		Language:                 locale.DefaultLang,
 		AdminUserIDs:             []string{},
 		PermissionRoleIDs:        []string{},
@@ -87,18 +77,6 @@ func (gs *GuildSettings) HasRolePerms(mem *discordgo.Member) bool {
 		}
 	}
 	return false
-}
-
-func (gs *GuildSettings) GetCommandPrefix() string {
-	// if we're past April 31st 2022 and on the official bot, @AutoMuteUs is the only supported prefix for the bot
-	if os.Getenv("AUTOMUTEUS_OFFICIAL") != "" && time.Now().Unix() > 1651377600 {
-		return OfficialBotMention
-	}
-	return gs.CommandPrefix
-}
-
-func (gs *GuildSettings) SetCommandPrefix(p string) {
-	gs.CommandPrefix = p
 }
 
 func (gs *GuildSettings) GetAdminUserIDs() []string {
@@ -183,15 +161,16 @@ func (gs *GuildSettings) SetMuteSpectator(behavior bool) {
 	gs.MuteSpectator = behavior
 }
 
-func (gs *GuildSettings) GetMapVersion() string {
-	if gs.MapVersion == "" {
-		return "simple"
-	}
-	return gs.MapVersion
+func (gs *GuildSettings) GetMapDetailed() bool {
+	return gs.MapVersion == "detailed"
 }
 
-func (gs *GuildSettings) SetMapVersion(n string) {
-	gs.MapVersion = n
+func (gs *GuildSettings) SetMapDetailed(v bool) {
+	if v {
+		gs.MapVersion = "detailed"
+	} else {
+		gs.MapVersion = "simple"
+	}
 }
 
 func (gs *GuildSettings) SetUnmuteDeadDuringTasks(v bool) {
