@@ -62,19 +62,7 @@ func CanTransfer(origin, dest *PostgresGuild) error {
 }
 
 func (psqlInterface *PsqlInterface) TransferPremium(origin, dest string) error {
-	originID, err := strconv.ParseUint(origin, 10, 64)
-	if err != nil {
-		return err
-	}
-	destID, err := strconv.ParseUint(dest, 10, 64)
-	if err != nil {
-		return err
-	}
-	originGuild, err := psqlInterface.getGuild(originID)
-	if err != nil {
-		return err
-	}
-	destGuild, err := psqlInterface.getGuild(destID)
+	originGuild, destGuild, err := psqlInterface.getOriginAndDestGuilds(origin, dest)
 	if err != nil {
 		return err
 	}
@@ -93,6 +81,47 @@ func (psqlInterface *PsqlInterface) TransferPremium(origin, dest string) error {
 		return err
 	}
 	return nil
+}
+
+func (psqlInterface *PsqlInterface) AddGoldSubServer(origin, dest string) error {
+	originGuild, destGuild, err := psqlInterface.getOriginAndDestGuilds(origin, dest)
+	if err != nil {
+		return err
+	}
+	if originGuild.Premium != int16(premium.GoldTier) {
+		return errors.New("only gold premium servers can add inheriting subservers")
+	}
+
+	err = CanTransfer(originGuild, destGuild)
+	if err != nil {
+		return err
+	}
+
+	err = psqlInterface.setGuildInheritsFrom(dest, origin)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (psqlInterface *PsqlInterface) getOriginAndDestGuilds(origin, dest string) (*PostgresGuild, *PostgresGuild, error) {
+	originID, err := strconv.ParseUint(origin, 10, 64)
+	if err != nil {
+		return nil, nil, err
+	}
+	destID, err := strconv.ParseUint(dest, 10, 64)
+	if err != nil {
+		return nil, nil, err
+	}
+	originGuild, err := psqlInterface.getGuild(originID)
+	if err != nil {
+		return nil, nil, err
+	}
+	destGuild, err := psqlInterface.getGuild(destID)
+	if err != nil {
+		return originGuild, nil, err
+	}
+	return originGuild, destGuild, nil
 }
 
 func (psqlInterface *PsqlInterface) setGuildTransferredTo(guildID, transferTo string) error {

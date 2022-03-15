@@ -73,3 +73,18 @@ func ExtractUserIDFromText(mention string) (string, error) {
 		return "", errors.New("mention does not conform to the correct format")
 	}
 }
+
+func ExtractChannelIDFromMention(mention string) (string, error) {
+	if strings.HasPrefix(mention, "<#") && strings.HasSuffix(mention, ">") {
+		err := ValidateSnowflake(mention[2 : len(mention)-1])
+		if err == nil {
+			return mention[2 : len(mention)-1], nil
+		}
+		return "", err
+	}
+	err := ValidateSnowflake(mention)
+	if err == nil {
+		return mention, nil
+	}
+	return "", err
+}
