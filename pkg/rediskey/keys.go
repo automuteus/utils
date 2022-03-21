@@ -2,7 +2,6 @@ package rediskey
 
 const TotalGuildsSet = "automuteus:count:guilds"
 const ActiveGamesZSet = "automuteus:games"
-const AllTokensHSet = "automuteus:alltokens"
 const EventsNamespace = "automuteus:capture:events"
 const JobNamespace = "automuteus:jobs:"
 
@@ -68,9 +67,8 @@ func GuildPremiumRecord(guildID string) string {
 	return "automuteus:premium:guild:" + guildID
 }
 
-// Tokens
-func GuildTokensKey(guildID string) string {
-	return "automuteus:tokens:guild:" + guildID
+func GuildPremiumMembershipVerify(guildID string) string {
+	return "automuteus:premium:guild:verify:" + guildID
 }
 
 func GuildTokenLock(guildID, hToken string) string {
