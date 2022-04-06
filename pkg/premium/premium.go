@@ -7,7 +7,7 @@ const (
 	BronzeTier
 	SilverTier
 	GoldTier
-	PlatTier
+	TrialTier
 	SelfHostTier
 )
 
@@ -16,7 +16,7 @@ var TierStrings = []string{
 	"Bronze",
 	"Silver",
 	"Gold",
-	"Platinum",
+	"Trial",
 	"SelfHost",
 }
 
