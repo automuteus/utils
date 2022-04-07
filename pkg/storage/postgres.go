@@ -7,6 +7,7 @@ import (
 	"github.com/automuteus/utils/pkg/premium"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/top-gg/go-dbl"
 	"io/ioutil"
 	"log"
 	"os"
@@ -113,6 +114,22 @@ func (psqlInterface *PsqlInterface) OptUserByString(userID string, opt bool) err
 	return nil
 }
 
+func (psqlInterface *PsqlInterface) SetUserVoteTime(userID string, timeUnix int64) error {
+	uid, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil {
+		return err
+	}
+	user, err := psqlInterface.EnsureUserExists(uid)
+	if err != nil {
+		return err
+	}
+	if user.VoteTimeUnix != nil {
+		return errors.New("user already has a vote time recorded in the DB")
+	}
+	_, err = psqlInterface.Pool.Exec(context.Background(), "UPDATE users SET vote_time_unix = $1 WHERE user_id = $2;", timeUnix, uid)
+	return err
+}
+
 func (psqlInterface *PsqlInterface) GetUserByString(userID string) (*PostgresUser, error) {
 	uid, err := strconv.ParseUint(userID, 10, 64)
 	if err != nil {
@@ -185,9 +202,50 @@ func (psqlInterface *PsqlInterface) insertPlayer(player *PostgresUserGame) error
 }
 
 const SecsInADay = 86400
+const SecsIn12Hrs = SecsInADay / 2
 
-func (psqlInterface *PsqlInterface) GetGuildPremiumStatus(guildID string) (premium.Tier, int) {
-	return psqlInterface.getGuildPremiumStatus(guildID, 0)
+func (psqlInterface *PsqlInterface) isUserPremium(dbl *dbl.Client, userID string) (bool, error) {
+	if dbl == nil {
+		return false, nil
+	}
+	voted, err := dbl.HasUserVoted("753795015830011944", userID)
+	if err != nil {
+		return false, err
+	}
+	if voted {
+		u, err := psqlInterface.GetUserByString(userID)
+		if err != nil {
+			return false, err
+		}
+		if u.VoteTimeUnix == nil {
+			// do this in the background so the overall check is quick
+			go func() {
+				err := psqlInterface.SetUserVoteTime(userID, time.Now().Unix())
+				if err != nil {
+					log.Println(err)
+				}
+			}()
+			return true, nil
+		} else {
+			// only premium if the first time they voted is within the last 12 hours
+			diff := time.Now().Unix() - int64(*u.VoteTimeUnix)
+			return diff < SecsIn12Hrs, nil
+		}
+	}
+	return false, nil
+}
+
+func (psqlInterface *PsqlInterface) GetGuildOrUserPremiumStatus(dbl *dbl.Client, guildID, userID string) (premium.Tier, int, error) {
+	tier, daysRem := psqlInterface.getGuildPremiumStatus(guildID, 0)
+	// only check the user premium if the guild doesn't have it
+	if premium.IsExpired(tier, daysRem) && dbl != nil && userID != "" {
+		prem, err := psqlInterface.isUserPremium(dbl, userID)
+		if prem {
+			// no expiry because the expiry is handled per-user elsewhere
+			return premium.TrialTier, premium.NoExpiryCode, err
+		}
+	}
+	return tier, daysRem, nil
 }
 
 func (psqlInterface *PsqlInterface) getGuildPremiumStatus(guildID string, depth int) (premium.Tier, int) {

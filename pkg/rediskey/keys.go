@@ -63,14 +63,6 @@ func GuildSettings(id HashedID) string {
 	return "automuteus:settings:guild:" + string(id)
 }
 
-func GuildPremiumRecord(guildID string) string {
-	return "automuteus:premium:guild:" + guildID
-}
-
-func GuildPremiumMembershipVerify(guildID string) string {
-	return "automuteus:premium:guild:verify:" + guildID
-}
-
 func GuildTokenLock(guildID, hToken string) string {
 	return "automuteus:muterequest:lock:" + hToken + ":" + guildID
 }
@@ -97,8 +89,4 @@ func UserSoftban(userID string) string {
 
 func UserSoftbanCount(userID string) string {
 	return "automuteus:ratelimit:softban:count:user:" + userID
-}
-
-func GuildPrefix(guildID string) string {
-	return "automuteus:prefix:guild:" + guildID
 }
