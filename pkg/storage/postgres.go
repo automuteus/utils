@@ -201,36 +201,40 @@ func (psqlInterface *PsqlInterface) insertPlayer(player *PostgresUserGame) error
 	return err
 }
 
-const SecsInADay = 86400
-const SecsIn12Hrs = SecsInADay / 2
+const (
+	SecsInADay  = 86400
+	SecsIn12Hrs = SecsInADay / 2
+	TopGGID     = "753795015830011944"
+)
 
 func (psqlInterface *PsqlInterface) isUserPremium(dbl *dbl.Client, userID string) (bool, error) {
 	if dbl == nil {
 		return false, nil
 	}
-	voted, err := dbl.HasUserVoted("753795015830011944", userID)
+	// first check Postgres, because top.gg has ratelimits
+	u, err := psqlInterface.GetUserByString(userID)
+	if err != nil {
+		return false, err
+	}
+	if u.VoteTimeUnix != nil {
+		// only premium if the first time they voted is within the last 12 hours
+		diff := time.Now().Unix() - int64(*u.VoteTimeUnix)
+		return diff < SecsIn12Hrs, nil
+	}
+	// only check if the user has never voted before
+	voted, err := dbl.HasUserVoted(TopGGID, userID)
 	if err != nil {
 		return false, err
 	}
 	if voted {
-		u, err := psqlInterface.GetUserByString(userID)
-		if err != nil {
-			return false, err
-		}
-		if u.VoteTimeUnix == nil {
-			// do this in the background so the overall check is quick
-			go func() {
-				err := psqlInterface.SetUserVoteTime(userID, time.Now().Unix())
-				if err != nil {
-					log.Println(err)
-				}
-			}()
-			return true, nil
-		} else {
-			// only premium if the first time they voted is within the last 12 hours
-			diff := time.Now().Unix() - int64(*u.VoteTimeUnix)
-			return diff < SecsIn12Hrs, nil
-		}
+		// do this in the background so the overall check is quick. We can overwrite because we know that tx_time=nil
+		go func() {
+			err := psqlInterface.SetUserVoteTime(userID, time.Now().Unix())
+			if err != nil {
+				log.Println(err)
+			}
+		}()
+		return true, nil
 	}
 	return false, nil
 }
@@ -240,9 +244,12 @@ func (psqlInterface *PsqlInterface) GetGuildOrUserPremiumStatus(dbl *dbl.Client,
 	// only check the user premium if the guild doesn't have it
 	if premium.IsExpired(tier, daysRem) && dbl != nil && userID != "" {
 		prem, err := psqlInterface.isUserPremium(dbl, userID)
+		if err != nil {
+			log.Println(err)
+		}
 		if prem {
 			// no expiry because the expiry is handled per-user elsewhere
-			return premium.TrialTier, premium.NoExpiryCode, err
+			return premium.TrialTier, premium.NoExpiryCode, nil
 		}
 	}
 	return tier, daysRem, nil
