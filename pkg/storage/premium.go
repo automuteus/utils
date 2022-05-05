@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/automuteus/utils/pkg/premium"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"strconv"
 	"time"
@@ -62,7 +63,12 @@ func CanTransfer(origin, dest *PostgresGuild) error {
 }
 
 func (psqlInterface *PsqlInterface) TransferPremium(origin, dest string) error {
-	originGuild, destGuild, err := psqlInterface.getOriginAndDestGuilds(origin, dest)
+	conn, err := psqlInterface.Pool.Acquire(context.Background())
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+	originGuild, destGuild, err := getOriginAndDestGuilds(conn.Conn(), origin, dest)
 	if err != nil {
 		return err
 	}
@@ -72,11 +78,11 @@ func (psqlInterface *PsqlInterface) TransferPremium(origin, dest string) error {
 		return err
 	}
 
-	err = psqlInterface.setGuildInheritsFrom(dest, origin)
+	err = setGuildInheritsFrom(conn, dest, origin)
 	if err != nil {
 		return err
 	}
-	err = psqlInterface.setGuildTransferredTo(origin, dest)
+	err = setGuildTransferredTo(conn, origin, dest)
 	if err != nil {
 		return err
 	}
@@ -84,7 +90,12 @@ func (psqlInterface *PsqlInterface) TransferPremium(origin, dest string) error {
 }
 
 func (psqlInterface *PsqlInterface) AddGoldSubServer(origin, dest string) error {
-	originGuild, destGuild, err := psqlInterface.getOriginAndDestGuilds(origin, dest)
+	conn, err := psqlInterface.Pool.Acquire(context.Background())
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+	originGuild, destGuild, err := getOriginAndDestGuilds(conn.Conn(), origin, dest)
 	if err != nil {
 		return err
 	}
@@ -97,14 +108,14 @@ func (psqlInterface *PsqlInterface) AddGoldSubServer(origin, dest string) error 
 		return err
 	}
 
-	err = psqlInterface.setGuildInheritsFrom(dest, origin)
+	err = setGuildInheritsFrom(conn, dest, origin)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (psqlInterface *PsqlInterface) getOriginAndDestGuilds(origin, dest string) (*PostgresGuild, *PostgresGuild, error) {
+func getOriginAndDestGuilds(conn PgxIface, origin, dest string) (*PostgresGuild, *PostgresGuild, error) {
 	originID, err := strconv.ParseUint(origin, 10, 64)
 	if err != nil {
 		return nil, nil, err
@@ -113,19 +124,19 @@ func (psqlInterface *PsqlInterface) getOriginAndDestGuilds(origin, dest string) 
 	if err != nil {
 		return nil, nil, err
 	}
-	originGuild, err := psqlInterface.getGuild(originID)
+	originGuild, err := getGuild(conn, originID)
 	if err != nil {
 		return nil, nil, err
 	}
-	destGuild, err := psqlInterface.getGuild(destID)
+	destGuild, err := getGuild(conn, destID)
 	if err != nil {
 		return originGuild, nil, err
 	}
 	return originGuild, destGuild, nil
 }
 
-func (psqlInterface *PsqlInterface) setGuildTransferredTo(guildID, transferTo string) error {
-	_, err := psqlInterface.Pool.Exec(context.Background(), "UPDATE guilds SET transferred_to = $2 WHERE guild_id = $1;", guildID, transferTo)
+func setGuildTransferredTo(conn *pgxpool.Conn, guildID, transferTo string) error {
+	_, err := conn.Exec(context.Background(), "UPDATE guilds SET transferred_to = $2 WHERE guild_id = $1;", guildID, transferTo)
 	if err != nil {
 		return err
 	}
@@ -133,8 +144,8 @@ func (psqlInterface *PsqlInterface) setGuildTransferredTo(guildID, transferTo st
 	return nil
 }
 
-func (psqlInterface *PsqlInterface) setGuildInheritsFrom(guildID, inheritsFrom string) error {
-	_, err := psqlInterface.Pool.Exec(context.Background(), "UPDATE guilds SET inherits_from = $2 WHERE guild_id = $1;", guildID, inheritsFrom)
+func setGuildInheritsFrom(conn *pgxpool.Conn, guildID, inheritsFrom string) error {
+	_, err := conn.Exec(context.Background(), "UPDATE guilds SET inherits_from = $2 WHERE guild_id = $1;", guildID, inheritsFrom)
 	if err != nil {
 		return err
 	}
