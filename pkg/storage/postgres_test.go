@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/automuteus/utils/pkg/premium"
+	"github.com/jackc/pgconn"
 	"github.com/pashagolub/pgxmock"
 	"testing"
 	"time"
@@ -100,6 +101,26 @@ func TestIsUserOrGuildPremium(t *testing.T) {
 	}
 	if premium.IsExpired(tier, days) {
 		t.Error("Trial tier with noexpiry should not evaluate to expired")
+	}
+
+	// we make sure that all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestInsertUser(t *testing.T) {
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	mock.ExpectExec("^INSERT INTO users VALUES ((.+), true, NULL)(.+)$").
+		WithArgs(UserIDInt).WillReturnResult(pgconn.CommandTag{})
+
+	err = insertUser(mock, UserIDInt)
+	if err != nil {
+		t.Error(err)
 	}
 
 	// we make sure that all expectations were met

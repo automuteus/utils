@@ -90,7 +90,7 @@ func getGuild(conn PgxIface, guildID uint64) (*PostgresGuild, error) {
 }
 
 func insertUser(conn PgxIface, userID uint64) error {
-	_, err := conn.Exec(context.Background(), "INSERT INTO users VALUES ($1, true);", userID)
+	_, err := conn.Exec(context.Background(), "INSERT INTO users VALUES ($1, true, NULL)", userID)
 	return err
 }
 
