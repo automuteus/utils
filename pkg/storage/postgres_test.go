@@ -128,3 +128,52 @@ func TestInsertUser(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
+
+func TestOptUser(t *testing.T) {
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	mock.ExpectQuery("^SELECT (.+) FROM users WHERE user_id = (.+)$").
+		WithArgs(UserIDInt).
+		WillReturnRows(
+			pgxmock.NewRows([]string{"user_id", "opt", "vote_time_unix"}).
+				AddRow(UserIDInt, true, nil)) //return the vote time being now
+
+	err = optUser(mock, UserIDInt, true)
+	if err == nil {
+		t.Error("Expected opting a user that is already opted to fail with error")
+	}
+
+	mock.ExpectQuery("^SELECT (.+) FROM users WHERE user_id = (.+)$").
+		WithArgs(UserIDInt).
+		WillReturnRows(
+			pgxmock.NewRows([]string{"user_id", "opt", "vote_time_unix"}).
+				AddRow(UserIDInt, true, nil)) //return the vote time being now
+
+	// expect to de-op the user
+	mock.ExpectExec("^UPDATE users SET opt = (.+) WHERE user_id = (.+)$").
+		WithArgs(false, UserIDInt).
+		WillReturnResult(pgconn.CommandTag{})
+
+	// expect the respective game_events to be unlinked from the user
+	mock.ExpectExec("^UPDATE game_events SET user_id = NULL WHERE user_id = (.+)$").
+		WithArgs(UserIDInt).
+		WillReturnResult(pgconn.CommandTag{})
+
+	// expect all the user's games to be deleted
+	mock.ExpectExec("^DELETE FROM users_games WHERE user_id = (.+)$").
+		WithArgs(UserIDInt).
+		WillReturnResult(pgconn.CommandTag{})
+
+	err = optUser(mock, UserIDInt, false)
+	if err != nil {
+		t.Error(err)
+	}
+
+	// we make sure that all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
