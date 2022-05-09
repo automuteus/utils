@@ -178,7 +178,7 @@ func getUser(conn PgxIface, userID uint64) (*PostgresUser, error) {
 	if len(users) > 0 {
 		return users[0], nil
 	}
-	return nil, nil
+	return nil, fmt.Errorf("no user found with ID %d", userID)
 }
 
 func (psqlInterface *PsqlInterface) GetGame(guildID, connectCode, matchID string) (*PostgresGame, error) {
