@@ -149,7 +149,7 @@ func TestGetUser(t *testing.T) {
 		t.Error("user should be nil")
 	}
 
-	// make sure an empty response (no user) returns an error
+	// make sure a populated response doesn't return an error
 	mock.ExpectQuery("^SELECT (.+) FROM users WHERE user_id = (.+)$").
 		WithArgs(UserIDInt).
 		WillReturnRows(
@@ -162,6 +162,9 @@ func TestGetUser(t *testing.T) {
 	}
 	if user == nil {
 		t.Error("expected user to not be nil")
+	}
+	if user.UserID != UserIDInt || !user.Opt {
+		t.Error("userID or opt mismatches what was returned from Postgres")
 	}
 
 	// we make sure that all expectations were met
