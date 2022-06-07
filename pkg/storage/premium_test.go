@@ -113,7 +113,7 @@ func TestCanRevertTransfer(t *testing.T) {
 	}
 
 	// special case for transfer revert should succeed
-	err = CanRevertTransfer(dest, origin)
+	err = CanRevertTransfer(origin, dest)
 	if err != nil {
 		t.Error(err)
 	}
