@@ -387,6 +387,45 @@ func ensureUserExists(conn PgxIface, userID uint64) (*PostgresUser, error) {
 	return user, err
 }
 
+func (psqlInterface *PsqlInterface) GetGamesForGuild(guildID uint64) ([]*PostgresGame, error) {
+	conn, err := psqlInterface.Pool.Acquire(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Release()
+	return getGamesForGuild(conn.Conn(), guildID)
+}
+
+func getGamesForGuild(conn PgxIface, guildID uint64) ([]*PostgresGame, error) {
+	var games []*PostgresGame
+	err := pgxscan.Select(context.Background(), conn, &games, "SELECT * FROM games WHERE guild_id = $1;", guildID)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
+
+func (psqlInterface *PsqlInterface) GetGamesEventsForGuild(guildID uint64) ([]*PostgresGameEvent, error) {
+	conn, err := psqlInterface.Pool.Acquire(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Release()
+	return getGameEventsForGuild(conn.Conn(), guildID)
+}
+
+func getGameEventsForGuild(conn PgxIface, guildID uint64) ([]*PostgresGameEvent, error) {
+	var r []*PostgresGameEvent
+	err := pgxscan.Select(context.Background(), conn, &r, "SELECT event_id, user_id, game_events.game_id, event_time, event_type, payload "+
+		"FROM game_events "+
+		"INNER JOIN games gg ON gg.game_id = game_events.game_id "+
+		"WHERE gg.guild_id = $1", guildID)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
 func (psqlInterface *PsqlInterface) AddInitialGame(game *PostgresGame) (uint64, error) {
 	conn, err := psqlInterface.Pool.Acquire(context.Background())
 	if err != nil {
