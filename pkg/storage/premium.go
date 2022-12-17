@@ -16,6 +16,9 @@ func CanTransfer(origin, dest *PostgresGuild) error {
 	if origin == nil || dest == nil {
 		return errors.New("nil origin or dest server")
 	}
+	if origin.GuildID == 754465589958803548 {
+		return errors.New("cant transfer the official AMU server premium")
+	}
 
 	if origin.Premium == int16(premium.FreeTier) {
 		return errors.New("origin server is free tier and cannot be transferred")
@@ -89,6 +92,67 @@ func (psqlInterface *PsqlInterface) TransferPremium(origin, dest string) error {
 	return nil
 }
 
+func CanRevertTransfer(origin, dest *PostgresGuild) error {
+	if origin == nil || dest == nil {
+		return errors.New("nil origin or dest server")
+	}
+	if origin.TransferredTo == nil || dest.InheritsFrom == nil || *origin.TransferredTo != dest.GuildID || *dest.InheritsFrom != origin.GuildID {
+		return errors.New("servers haven't been inherited/transferred appropriately to revert a transfer")
+	}
+
+	return nil
+}
+
+func (psqlInterface *PsqlInterface) RevertPremiumTransfer(original, transferred string) error {
+	conn, err := psqlInterface.Pool.Acquire(context.Background())
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+	return revertPremiumTransfer(conn.Conn(), original, transferred)
+}
+
+func revertPremiumTransfer(conn PgxIface, original, transferred string) error {
+	originGuild, destGuild, err := getOriginAndDestGuilds(conn, original, transferred)
+	if err != nil {
+		return err
+	}
+
+	err = CanRevertTransfer(originGuild, destGuild)
+	if err != nil {
+		return err
+	}
+
+	err = setGuildInheritsNull(conn, transferred)
+	if err != nil {
+		return err
+	}
+	err = setGuildTransferredNull(conn, original)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//func CanChainTransfer(origin, middle, dest *PostgresGuild) error {
+//	if origin == nil || middle == nil || dest == nil {
+//		return errors.New("nil origin, middle, or dest server")
+//	}
+//
+//	if origin.TransferredTo == nil || middle.InheritsFrom == nil || *origin.TransferredTo != middle.GuildID {
+//		return errors.New("origin and middle do not have the required transfer/inherit relationship")
+//	}
+//
+//	if middle.TransferredTo != nil {
+//		return errors.New("middle server has already been transferred, somehow")
+//	}
+//
+//	if dest.InheritsFrom != nil || dest.TransferredTo != nil {
+//		return errors.New("destination server already inherits/transfers to/from another server")
+//	}
+//
+//}
+
 func (psqlInterface *PsqlInterface) AddGoldSubServer(origin, dest string) error {
 	conn, err := psqlInterface.Pool.Acquire(context.Background())
 	if err != nil {
@@ -144,11 +208,29 @@ func setGuildTransferredTo(conn *pgxpool.Conn, guildID, transferTo string) error
 	return nil
 }
 
+func setGuildTransferredNull(conn PgxIface, guildID string) error {
+	_, err := conn.Exec(context.Background(), "UPDATE guilds SET transferred_to = NULL WHERE guild_id = $1;", guildID)
+	if err != nil {
+		return err
+	}
+	log.Printf("Marked guild %s as NULL transfer\n", guildID)
+	return nil
+}
+
 func setGuildInheritsFrom(conn *pgxpool.Conn, guildID, inheritsFrom string) error {
 	_, err := conn.Exec(context.Background(), "UPDATE guilds SET inherits_from = $2 WHERE guild_id = $1;", guildID, inheritsFrom)
 	if err != nil {
 		return err
 	}
 	log.Printf("Marked guild %s as inheriting from %s\n", guildID, inheritsFrom)
+	return nil
+}
+
+func setGuildInheritsNull(conn PgxIface, guildID string) error {
+	_, err := conn.Exec(context.Background(), "UPDATE guilds SET inherits_from = NULL WHERE guild_id = $1;", guildID)
+	if err != nil {
+		return err
+	}
+	log.Printf("Marked guild %s as NULL inheriting\n", guildID)
 	return nil
 }

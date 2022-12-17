@@ -129,6 +129,50 @@ func TestInsertUser(t *testing.T) {
 	}
 }
 
+func TestGetUser(t *testing.T) {
+	mock, err := pgxmock.NewConn()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	// make sure an empty response (no user) returns an error
+	mock.ExpectQuery("^SELECT (.+) FROM users WHERE user_id = (.+)$").
+		WithArgs(UserIDInt).
+		WillReturnRows(
+			pgxmock.NewRows([]string{"user_id", "opt", "vote_time_unix"}))
+
+	user, err := getUser(mock, UserIDInt)
+	if err == nil {
+		t.Error("error should not be nil when no users are returned")
+	}
+	if user != nil {
+		t.Error("user should be nil")
+	}
+
+	// make sure a populated response doesn't return an error
+	mock.ExpectQuery("^SELECT (.+) FROM users WHERE user_id = (.+)$").
+		WithArgs(UserIDInt).
+		WillReturnRows(
+			pgxmock.NewRows([]string{"user_id", "opt", "vote_time_unix"}).
+				AddRow(UserIDInt, true, nil))
+
+	user, err = getUser(mock, UserIDInt)
+	if err != nil {
+		t.Error(err)
+	}
+	if user == nil {
+		t.Error("expected user to not be nil")
+	}
+	if user.UserID != UserIDInt || !user.Opt {
+		t.Error("userID or opt mismatches what was returned from Postgres")
+	}
+
+	// we make sure that all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
 func TestOptUser(t *testing.T) {
 	mock, err := pgxmock.NewConn()
 	if err != nil {
