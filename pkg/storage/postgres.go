@@ -76,6 +76,24 @@ func insertGuild(conn PgxIface, guildID uint64, guildName string) error {
 	return err
 }
 
+func (psqlInterface *PsqlInterface) GetGuildForDownload(guildID uint64) (*PostgresGuild, error) {
+	conn, err := psqlInterface.Pool.Acquire(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Release()
+
+	guild, err := getGuild(conn.Conn(), guildID)
+	if err != nil {
+		return nil, err
+	}
+	guild.Premium = int16(premium.SelfHostTier)
+	guild.TxTimeUnix = nil
+	guild.InheritsFrom = nil
+	guild.TransferredTo = nil
+	return guild, nil
+}
+
 func getGuild(conn PgxIface, guildID uint64) (*PostgresGuild, error) {
 	var guilds []*PostgresGuild
 	err := pgxscan.Select(context.Background(), conn, &guilds, "SELECT * FROM guilds WHERE guild_id = $1", guildID)

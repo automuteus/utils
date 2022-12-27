@@ -1,5 +1,10 @@
 package storage
 
+import (
+	"bytes"
+	"fmt"
+)
+
 type PostgresGuild struct {
 	GuildID       uint64  `db:"guild_id"`
 	GuildName     string  `db:"guild_name"`
@@ -9,6 +14,20 @@ type PostgresGuild struct {
 	InheritsFrom  *uint64 `db:"inherits_from"`
 }
 
+func nilToEmpty[T int32 | uint64](s *T) string {
+	if s == nil {
+		return ""
+	} else {
+		return fmt.Sprintf("%v", *s)
+	}
+}
+
+func (g *PostgresGuild) ToCSV() string {
+	return fmt.Sprintf("guild_id,guild_name,premium,tx_time_unix,transferred_to,inherits_from,\n"+
+		"%d,%s,%d,%s,%s,%s\n", g.GuildID, g.GuildName, g.Premium,
+		nilToEmpty(g.TxTimeUnix), nilToEmpty(g.TransferredTo), nilToEmpty(g.InheritsFrom))
+}
+
 type PostgresGame struct {
 	GameID      int64  `db:"game_id"`
 	GuildID     uint64 `db:"guild_id"`
@@ -16,6 +35,17 @@ type PostgresGame struct {
 	StartTime   int32  `db:"start_time"`
 	WinType     int16  `db:"win_type"`
 	EndTime     int32  `db:"end_time"`
+}
+
+func GamesToCSV(g []*PostgresGame) string {
+	s := bytes.NewBufferString("game_id,guild_id,connect_code,start_time,win_type,end_time,\n")
+	for _, v := range g {
+		if v != nil {
+			s.WriteString(fmt.Sprintf("%d,%d,%s,%d,%d,%d,\n",
+				v.GameID, v.GuildID, v.ConnectCode, v.StartTime, v.WinType, v.EndTime))
+		}
+	}
+	return s.String()
 }
 
 type PostgresUser struct {
@@ -41,6 +71,17 @@ type PostgresGameEvent struct {
 	EventTime int32   `db:"event_time"`
 	EventType int16   `db:"event_type"`
 	Payload   string  `db:"payload"`
+}
+
+func EventsToCSV(e []*PostgresGameEvent) string {
+	s := bytes.NewBufferString("event_id,user_id,game_id,event_time,event_type,payload,\n")
+	for _, v := range e {
+		if v != nil {
+			s.WriteString(fmt.Sprintf("%d,%s,%d,%d,%d,%s,\n",
+				v.EventID, nilToEmpty(v.UserID), v.GameID, v.EventTime, v.EventType, v.Payload))
+		}
+	}
+	return s.String()
 }
 
 type PostgresOtherPlayerRanking struct {
