@@ -92,17 +92,17 @@ func TestUsersToCSV(t *testing.T) {
 	}
 }
 
-func TestUserGamesToCSV(t *testing.T) {
-	userGames := []*PostgresUserGame{
+func TestUsersGamesToCSV(t *testing.T) {
+	usersGames := []*PostgresUserGame{
 		nil,
 		nil,
 		nil,
 	}
-	if len(strings.Split(UserGamesToCSV(userGames), "\n")) > 2 {
+	if len(strings.Split(UsersGamesToCSV(usersGames), "\n")) > 2 {
 		t.Error("Expected only 1 line of CSV when provided with nil usergames ptrs")
 	}
 
-	userGames[0] = &PostgresUserGame{
+	usersGames[0] = &PostgresUserGame{
 		UserID:      0,
 		GuildID:     1,
 		GameID:      2,
@@ -112,7 +112,7 @@ func TestUserGamesToCSV(t *testing.T) {
 		PlayerWon:   true,
 	}
 
-	if strings.Split(UserGamesToCSV(userGames), "\n")[1] != "0,1,2,tom,3,4,true," {
+	if strings.Split(UsersGamesToCSV(usersGames), "\n")[1] != "0,1,2,tom,3,4,true," {
 		t.Error("Users game to csv does not match expected value")
 	}
 }

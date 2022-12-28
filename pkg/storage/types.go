@@ -74,7 +74,7 @@ type PostgresUserGame struct {
 	PlayerWon   bool   `db:"player_won"`
 }
 
-func UserGamesToCSV(ug []*PostgresUserGame) string {
+func UsersGamesToCSV(ug []*PostgresUserGame) string {
 	s := bytes.NewBufferString("user_id,guild_id,game_id,player_name,player_color,player_role,player_won,\n")
 	for _, v := range ug {
 		if v != nil {
