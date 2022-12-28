@@ -455,12 +455,12 @@ func (psqlInterface *PsqlInterface) GetUsersForGuild(guildID uint64) ([]*Postgre
 
 func getUsersForGuild(conn PgxIface, guildID uint64) ([]*PostgresUser, error) {
 	var r []*PostgresUser
-	err := pgxscan.Select(context.Background(), conn, &r, "SELECT DISTINCT users.user_id, true, null "+
+	err := pgxscan.Select(context.Background(), conn, &r, "SELECT DISTINCT users.user_id,opt,vote_time_unix "+
 		"FROM users "+
-		"INNER JOIN game_events ge on users.user_id = ge.user_id "+
+		"INNER JOIN game_events ge ON users.user_id = ge.user_id "+
 		"INNER JOIN games gg ON gg.game_id = ge.game_id ",
 		// only return users who are opted in to data collection
-		"WHERE gg.guild_id = $1 AND users.opt = True", guildID)
+		"WHERE gg.guild_id = $1 AND users.opt = true", guildID)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +482,7 @@ func getUsersGamesForGuild(conn PgxIface, guildID uint64) ([]*PostgresUserGame, 
 	err := pgxscan.Select(context.Background(), conn, &r, "SELECT DISTINCT users_games.user_id,guild_id,game_id,player_name,player_color,player_role,player_won "+
 		"FROM users_games "+
 		"INNER JOIN users u ON u.user_id = users_games.user_id ",
-		"WHERE guild_id = $1 AND u.opt = True", guildID)
+		"WHERE guild_id = $1 AND u.opt = true", guildID)
 	if err != nil {
 		return nil, err
 	}
