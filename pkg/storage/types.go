@@ -54,6 +54,16 @@ type PostgresUser struct {
 	VoteTimeUnix *int32 `db:"vote_time_unix"`
 }
 
+func UsersToCSV(u []*PostgresUser) string {
+	s := bytes.NewBufferString("user_id,opt,vote_time_unix,\n")
+	for _, v := range u {
+		if v != nil {
+			s.WriteString(fmt.Sprintf("%d,%t,%s,\n", v.UserID, v.Opt, nilToEmpty(v.VoteTimeUnix)))
+		}
+	}
+	return s.String()
+}
+
 type PostgresUserGame struct {
 	UserID      uint64 `db:"user_id"`
 	GuildID     uint64 `db:"guild_id"`
@@ -62,6 +72,17 @@ type PostgresUserGame struct {
 	PlayerColor int16  `db:"player_color"`
 	PlayerRole  int16  `db:"player_role"`
 	PlayerWon   bool   `db:"player_won"`
+}
+
+func UserGamesToCSV(ug []*PostgresUserGame) string {
+	s := bytes.NewBufferString("user_id,guild_id,game_id,player_name,player_color,player_role,player_won,\n")
+	for _, v := range ug {
+		if v != nil {
+			s.WriteString(fmt.Sprintf("%d,%d,%d,%s,%d,%d,%t,\n",
+				v.UserID, v.GuildID, v.GameID, v.PlayerName, v.PlayerColor, v.PlayerRole, v.PlayerWon))
+		}
+	}
+	return s.String()
 }
 
 type PostgresGameEvent struct {

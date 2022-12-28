@@ -455,7 +455,7 @@ func (psqlInterface *PsqlInterface) GetUsersForGuild(guildID uint64) ([]*Postgre
 
 func getUsersForGuild(conn PgxIface, guildID uint64) ([]*PostgresUser, error) {
 	var r []*PostgresUser
-	err := pgxscan.Select(context.Background(), conn, &r, "SELECT DISTINCT users.user_id, opt, vote_time_unix "+
+	err := pgxscan.Select(context.Background(), conn, &r, "SELECT DISTINCT users.user_id, true, null "+
 		"FROM users "+
 		"INNER JOIN game_events ge on users.user_id = ge.user_id "+
 		"INNER JOIN games gg ON gg.game_id = ge.game_id ",

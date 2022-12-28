@@ -71,3 +71,48 @@ func TestEventsToCSV(t *testing.T) {
 		t.Error("Events to CSV didn't match expected value")
 	}
 }
+
+func TestUsersToCSV(t *testing.T) {
+	users := []*PostgresUser{
+		nil,
+		nil,
+		nil,
+	}
+	if len(strings.Split(UsersToCSV(users), "\n")) > 2 {
+		t.Error("Expected only 1 line of CSV when provided with nil user ptrs")
+	}
+
+	users[0] = &PostgresUser{
+		UserID:       0,
+		Opt:          true,
+		VoteTimeUnix: nil,
+	}
+	if strings.Split(UsersToCSV(users), "\n")[1] != "0,true,," {
+		t.Error("Users to CSV didn't match expected value")
+	}
+}
+
+func TestUserGamesToCSV(t *testing.T) {
+	userGames := []*PostgresUserGame{
+		nil,
+		nil,
+		nil,
+	}
+	if len(strings.Split(UserGamesToCSV(userGames), "\n")) > 2 {
+		t.Error("Expected only 1 line of CSV when provided with nil usergames ptrs")
+	}
+
+	userGames[0] = &PostgresUserGame{
+		UserID:      0,
+		GuildID:     1,
+		GameID:      2,
+		PlayerName:  "tom",
+		PlayerColor: 3,
+		PlayerRole:  4,
+		PlayerWon:   true,
+	}
+
+	if strings.Split(UserGamesToCSV(userGames), "\n")[1] != "0,1,2,tom,3,4,true," {
+		t.Error("Users game to csv does not match expected value")
+	}
+}
