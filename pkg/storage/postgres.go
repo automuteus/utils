@@ -444,6 +444,51 @@ func getGameEventsForGuild(conn PgxIface, guildID uint64) ([]*PostgresGameEvent,
 	return r, nil
 }
 
+func (psqlInterface *PsqlInterface) GetUsersForGuild(guildID uint64) ([]*PostgresUser, error) {
+	conn, err := psqlInterface.Pool.Acquire(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Release()
+	return getUsersForGuild(conn.Conn(), guildID)
+}
+
+func getUsersForGuild(conn PgxIface, guildID uint64) ([]*PostgresUser, error) {
+	var r []*PostgresUser
+	err := pgxscan.Select(context.Background(), conn, &r, "SELECT DISTINCT users.user_id, opt, vote_time_unix "+
+		"FROM users "+
+		"INNER JOIN game_events ge on users.user_id = ge.user_id "+
+		"INNER JOIN games gg ON gg.game_id = ge.game_id ",
+		// only return users who are opted in to data collection
+		"WHERE gg.guild_id = $1 AND users.opt = True", guildID)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+func (psqlInterface *PsqlInterface) GetUsersGamesForGuild(guildID uint64) ([]*PostgresUserGame, error) {
+	conn, err := psqlInterface.Pool.Acquire(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Release()
+
+	return getUsersGamesForGuild(conn.Conn(), guildID)
+}
+
+func getUsersGamesForGuild(conn PgxIface, guildID uint64) ([]*PostgresUserGame, error) {
+	var r []*PostgresUserGame
+	err := pgxscan.Select(context.Background(), conn, &r, "SELECT DISTINCT users_games.user_id,guild_id,game_id,player_name,player_color,player_role,player_won "+
+		"FROM users_games "+
+		"INNER JOIN users u ON u.user_id = users_games.user_id ",
+		"WHERE guild_id = $1 AND u.opt = True", guildID)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
 func (psqlInterface *PsqlInterface) AddInitialGame(game *PostgresGame) (uint64, error) {
 	conn, err := psqlInterface.Pool.Acquire(context.Background())
 	if err != nil {
