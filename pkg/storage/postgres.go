@@ -420,7 +420,7 @@ func getGamesForGuild(conn PgxIface, guildID uint64) ([]*PostgresGame, error) {
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return games, nil
 }
 
 func (psqlInterface *PsqlInterface) GetGamesEventsForGuild(guildID uint64) ([]*PostgresGameEvent, error) {
